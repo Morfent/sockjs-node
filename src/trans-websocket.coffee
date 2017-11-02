@@ -12,6 +12,13 @@ transport = require('./transport')
 
 exports.app =
     _websocket_check: (req, connection, head) ->
+        ver = req.headers['sec-websocket-version'] or ''
+        if ver isnt '13'
+            connection.setHeader('Sec-WebSocket-Version', '13')
+            throw {
+                status: 400
+                message: 'Only supported WebSocket protocol is RFC 6455.'
+            }
         if not FayeWebsocket.isWebSocket(req)
             throw {
                 status: 400
@@ -30,12 +37,6 @@ exports.app =
 
     raw_websocket: (req, connection, head) ->
         @_websocket_check(req, connection, head)
-        ver = req.headers['sec-websocket-version'] or ''
-        if ['8', '13'].indexOf(ver) is -1
-            throw {
-                status: 400
-                message: 'Only supported WebSocket protocol is RFC 6455.'
-            }
         ws = new FayeWebsocket(req, connection, head, null,
                                @options.faye_server_options)
         ws.onopen = =>
