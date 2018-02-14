@@ -18,8 +18,17 @@ exports.app =
                 message: 'Not a valid websocket request'
             }
 
+    _version_check: (req) ->
+        ver = req.headers['sec-websocket-version'] or ''
+        if ['8', '13'].indexOf(ver) is -1
+            throw {
+                status: 400
+                message: 'Only supported WebSocket protocol is RFC 6455.'
+            }
+
     sockjs_websocket: (req, connection, head) ->
         @_websocket_check(req, connection, head)
+        @_version_check(req)
         ws = new FayeWebsocket(req, connection, head, null,
                                @options.faye_server_options)
         ws.onopen = =>
@@ -30,12 +39,7 @@ exports.app =
 
     raw_websocket: (req, connection, head) ->
         @_websocket_check(req, connection, head)
-        ver = req.headers['sec-websocket-version'] or ''
-        if ['8', '13'].indexOf(ver) is -1
-            throw {
-                status: 400
-                message: 'Only supported WebSocket protocol is RFC 6455.'
-            }
+        @_version_check(req)
         ws = new FayeWebsocket(req, connection, head, null,
                                @options.faye_server_options)
         ws.onopen = =>
